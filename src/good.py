@@ -1,4 +1,6 @@
 from lxml import etree
+from urllib.error import HTTPError
+from aiogram.utils.formatting import Text, Bold, Url
 import aiohttp
 
 
@@ -6,22 +8,16 @@ class Parser:
     "Yandex Market good page parser class."
 
     possible_price_paths = [
-        "/html/body/div[2]/div/div[2]/div/div/div/div[1]/div\
-        /div[1]/div[3]/div[4]/section[1]/div[2]/div/div/div/div\
-        /div/div[2]/div[1]/div/div/div[1]/div/div[2]/div[2]\
-        /div[1]/div/div/span[1]/span[1]",
-        "/html/body/div[2]/div/div[2]/div/div/div/div[1]/div\
-        /div[1]/div[3]/div[4]/section[1]/div[2]/div/div/div\
-        /div/div/div[2]/div[1]/div/div/div[1]/div/div[2]/div[2]\
-        /div[1]/div/div/div[2]/div[1]/div/div[1]/span[2]/span[1]",
+        '//*[@id="/content/page/fancyPage/defaultPage/mainDO/price/priceOffer"]/div/div[1]/div/div[1]/button/span/span[1]',
+        '//*[@id="/content/page/fancyPage/defaultPage/mainDO/price/priceOffer"]/div/div[1]/div/div[1]/span/span[1]',
+        '//*[@id="/content/page/fancyPage/defaultPage/mainDO/price/priceOffer"]/div/div[1]/div[1]/span/span[1]',
     ]
 
     def __init__(self, body: str) -> None:
         tree = etree.HTML(body)
 
         self.title = tree.xpath(
-            "/html/body/div[2]/div/div[2]/div/div/div/div[1]\
-            /div/div[1]/div[3]/div[3]/div/div[2]/div/div/h1"
+            '//*[@id="/content/page/fancyPage/defaultPage/productTitle"]/div/div/h1'
         )[0].text
 
         for path in self.possible_price_paths:
@@ -42,18 +38,13 @@ class Parser:
 
         try:
             self.description = tree.xpath(
-                "/html/body/div[2]/div/div[2]/div/div/div/div[1]/div/div[1]\
-                /div[3]/div[5]/div[3]/div[1]/div/div/div/div/div[2]\
-                /div/div[1]/div[1]/div/div"
+                '//*[@id="product-description"]/div[1]/div[1]/div/div'
             )[0].text
         except IndexError:
             self.description = None
 
 
 class Good:
-    MESSAGE_TEMPLATE = "Part number: {part_number}\nURL: [link]({url})\n\
-Title: {title}\nPrice: {price} RUB"
-
     def __init__(self, part_number: int) -> None:
         if not isinstance(part_number, int):
             raise ValueError
@@ -71,37 +62,33 @@ Title: {title}\nPrice: {price} RUB"
         async with aiohttp.ClientSession(
             timeout=aiohttp.ClientTimeout(7)
         ) as session:
-            try:
-                r = await session.get(self.url)
-            except TimeoutError:
-                return None
-
+            r = await session.get(self.url)
             if r.status != 200:
-                return None
+                raise HTTPError
+            text = await r.text()
+            parsed = Parser(text)
+        self.title = parsed.title
+        self.price = parsed.price
+        self.description = parsed.description
 
-            try:
-                text = await r.text()
-                parsed = Parser(text)
-            except IndexError:
-                return None
-
-            self.title = parsed.title
-            self.price = parsed.price
-            self.description = parsed.description
-
-    def __str__(self) -> str:
-        """This method is made to convert Good object into string that
+    def to_message(self) -> Text:
+        """This method is made to convert Good object into Text object that
         will be sent by the bot."""
 
-        message = self.MESSAGE_TEMPLATE.format(
-            part_number=self.part_number,
-            url=self.url,
-            title=self.title,
-            price=self.price,
-        )
+        args = [
+            Bold("Title: "),
+            f"{self.title}\n",
+            Bold("Part number: "),
+            f"{self.part_number}\n",
+            Bold("Price: "),
+            f"{self.price}\n",
+            Bold("URL: "),
+            Url(self.url),
+            "\n",
+        ]
         if self.description is not None:
-            return f"{message}\nDescription: {self.description}"
-        return message
+            args.extend([Bold("Description: "), f"{self.description}\n"])
+        return Text(*args)
 
     def __iter__(self) -> tuple[str | int]:
         return iter(
