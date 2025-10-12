@@ -107,7 +107,6 @@ Title: {title}\nPrice: {price} RUB"
         return iter(
             [
                 self.part_number,
-                self.url,
                 self.title,
                 self.price,
                 self.description,
@@ -115,7 +114,7 @@ Title: {title}\nPrice: {price} RUB"
         )
 
     @staticmethod
-    def from_fields(
+    def from_tuple(
         part_number: int,
         title: str,
         price: int,
