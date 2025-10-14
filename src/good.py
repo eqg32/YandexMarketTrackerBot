@@ -2,25 +2,25 @@ from lxml import etree
 from urllib.error import HTTPError
 from aiogram.utils.formatting import Text, Bold, Url
 import aiohttp
+import tomllib
 
 
 class Parser:
     "Yandex Market good page parser class."
 
-    possible_price_paths = [
-        '//*[@id="/content/page/fancyPage/defaultPage/mainDO/price/priceOffer"]/div/div[1]/div/div[1]/button/span/span[1]',
-        '//*[@id="/content/page/fancyPage/defaultPage/mainDO/price/priceOffer"]/div/div[1]/div/div[1]/span/span[1]',
-        '//*[@id="/content/page/fancyPage/defaultPage/mainDO/price/priceOffer"]/div/div[1]/div[1]/span/span[1]',
-    ]
+    with open("config.toml", "rb") as file:
+        config = tomllib.load(file)
+
+    price_paths = config["xpaths"]["price_paths"]
+    title_path = config["xpaths"]["title_path"]
+    description_path = config["xpaths"]["description_path"]
 
     def __init__(self, body: str) -> None:
         tree = etree.HTML(body)
 
-        self.title = tree.xpath(
-            '//*[@id="/content/page/fancyPage/defaultPage/productTitle"]/div/div/h1'
-        )[0].text
+        self.title = tree.xpath(self.title_path)[0].text
 
-        for path in self.possible_price_paths:
+        for path in self.price_paths:
             try:
                 price = (
                     tree.xpath(path)[0]
@@ -37,9 +37,7 @@ class Parser:
         self.price = int(price)
 
         try:
-            self.description = tree.xpath(
-                '//*[@id="product-description"]/div[1]/div[1]/div/div'
-            )[0].text
+            self.description = tree.xpath(self.description_path)[0].text
         except IndexError:
             self.description = None
 

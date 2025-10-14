@@ -1,0 +1,5 @@
+[xpaths]
+# xpaths of elements on a webpage
+title_path = ''
+description_path = ''
+price_paths = ['', '', '']
