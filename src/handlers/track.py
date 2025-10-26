@@ -2,8 +2,8 @@ from aiogram import Router, types
 from aiogram.filters import Command, StateFilter
 from aiogram.fsm.context import FSMContext
 from src.states.track import TrackState, UntrackState
-from src.keyboards.keyboard import main_kb
-from src.good import Good
+from src.keyboards.keyboard import start_kb
+from src.utils.good import Good
 from urllib.error import HTTPError
 from contextlib import suppress
 import sqlite3
@@ -29,13 +29,13 @@ async def add_good(
         await message.answer("The part number should be a number!")
     except HTTPError:
         await message.answer(
-            "Could not connect to Yandex Market!", reply_markup=main_kb()
+            "Could not connect to Yandex Market!", reply_markup=start_kb()
         )
         await state.clear()
     except IndexError:
         await message.answer(
             "Unfortunately, we could not parse a good! This might have happened because of changes from Yandex Market",
-            reply_markup=main_kb(),
+            reply_markup=start_kb(),
         )
         await state.clear()
     else:
@@ -48,7 +48,7 @@ async def add_good(
             )
         cur.close()
         con.commit()
-        await message.answer("Success!", reply_markup=main_kb())
+        await message.answer("Success!", reply_markup=start_kb())
     await state.clear()
 
 
@@ -79,5 +79,5 @@ async def remove_good(
         cur.execute("DELETE FROM goods WHERE part_number = ?", (message.text,))
     cur.close()
     con.commit()
-    await message.answer("Success!", reply_markup=main_kb())
+    await message.answer("Success!", reply_markup=start_kb())
     await state.clear()

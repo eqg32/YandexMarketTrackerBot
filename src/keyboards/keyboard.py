@@ -2,7 +2,7 @@ from aiogram.utils.keyboard import ReplyKeyboardBuilder
 from aiogram import types
 
 
-def main_kb() -> types.ReplyKeyboardMarkup:
+def start_kb() -> types.ReplyKeyboardMarkup:
     kb = ReplyKeyboardBuilder()
     for text in ["/track", "/untrack", "/list", "/help"]:
         kb.button(text=text)

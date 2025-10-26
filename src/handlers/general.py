@@ -1,11 +1,10 @@
 from aiogram import Router, types
 from aiogram.filters import Command, StateFilter
 from aiogram.enums.parse_mode import ParseMode
-from aiogram.utils.formatting import Text
 from aiogram.fsm.context import FSMContext
 from urllib.error import HTTPError
-from src.keyboards.keyboard import main_kb
-from src.good import Good
+from src.keyboards.keyboard import start_kb
+from src.utils.good import Good
 import sqlite3
 
 
@@ -19,7 +18,7 @@ HELP_MESSAGE = """This is a Yandex Market tracker bot. Here are the available co
 
 @router.message(StateFilter(None), Command(commands=["start", "help"]))
 async def help(message: types.Message):
-    await message.answer(HELP_MESSAGE, reply_markup=main_kb())
+    await message.answer(HELP_MESSAGE, reply_markup=start_kb())
 
 
 @router.message(StateFilter(None), Command("list"))
@@ -41,12 +40,12 @@ async def list_goods(message: types.Message, con: sqlite3.Connection):
             except HTTPError:
                 await message.answer(
                     "Could not connect to Yandex Market!",
-                    reply_markup=main_kb(),
+                    reply_markup=start_kb(),
                 )
             except IndexError:
                 await message.answer(
                     f"Could not find a good with part number {good.part_number}! It might have been removed from Yandex Market.",
-                    reply_markup=main_kb(),
+                    reply_markup=start_kb(),
                 )
                 cur.execute(
                     "DELETE FROM goods WHERE part_number = ?",
@@ -69,7 +68,7 @@ async def list_goods(message: types.Message, con: sqlite3.Connection):
                 )
     else:
         await message.answer(
-            "You currently do not track any goods!", reply_markup=main_kb()
+            "You currently do not track any goods!", reply_markup=start_kb()
         )
     con.commit()
     cur.close()
@@ -77,5 +76,5 @@ async def list_goods(message: types.Message, con: sqlite3.Connection):
 
 @router.message(Command("cancel"))
 async def cancel(message: types.Message, state: FSMContext):
-    await message.answer("Success!", reply_markup=main_kb())
+    await message.answer("Success!", reply_markup=start_kb())
     await state.clear()
