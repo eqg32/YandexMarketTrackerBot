@@ -1,0 +1,3 @@
+* Introduction
+
+This is a Yandex Market tracker bot. It is used to track goods the user wants.
