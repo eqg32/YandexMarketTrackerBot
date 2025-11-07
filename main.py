@@ -1,6 +1,7 @@
 from aiogram import Dispatcher, Bot
 from src.handlers import general
 from src.handlers import track
+from src.handlers import view_cart
 from src.middlewares.db_middleware import DBMiddleware
 import asyncio
 import os
@@ -11,10 +12,11 @@ async def main():
     dp = Dispatcher()
     db_middleware = DBMiddleware()
 
-    dp.message.middleware(db_middleware)
+    dp.update.middleware(db_middleware)
     dp.include_routers(
         general.router,
         track.router,
+        view_cart.router,
     )
     await bot.delete_webhook(drop_pending_updates=True)
     await dp.start_polling(bot)

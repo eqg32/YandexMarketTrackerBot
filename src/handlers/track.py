@@ -1,8 +1,8 @@
-from aiogram import Router, types
-from aiogram.filters import Command, StateFilter
+from aiogram import Router, F, types
+from aiogram.filters import StateFilter
 from aiogram.fsm.context import FSMContext
+from src.handlers.general import main_menu
 from src.states.track import TrackState, UntrackState
-from src.keyboards.keyboard import start_kb
 from src.utils.good import Good
 from urllib.error import HTTPError
 from contextlib import suppress
@@ -12,10 +12,13 @@ import sqlite3
 router = Router()
 
 
-@router.message(StateFilter(None), Command("track"))
-async def track(message: types.Message, state: FSMContext):
-    await message.answer("Fine! Send me the part number of your good!")
+@router.callback_query(StateFilter(None), F.data == "main_menu_track")
+async def track(callback: types.CallbackQuery, state: FSMContext):
+    await callback.message.answer(
+        "Fine! Send me the part number of your good!"
+    )
     await state.set_state(TrackState.entering_part_number)
+    await callback.answer()
 
 
 @router.message(TrackState.entering_part_number)
@@ -42,22 +45,25 @@ async def add_good(
         cur = con.cursor()
         with suppress(sqlite3.IntegrityError):
             cur.execute("INSERT INTO goods VALUES (?, ?, ?, ?)", tuple(good))
+        with suppress(sqlite3.IntegrityError):
             cur.execute(
                 "INSERT INTO user_goods VALUES (?, ?)",
                 (message.from_user.id, message.text),
             )
         cur.close()
         con.commit()
-        await message.answer("Success!", reply_markup=start_kb())
+        await message.answer("Success!")
+        await main_menu(message, state, con)
     await state.clear()
 
 
-@router.message(StateFilter(None), Command("untrack"))
-async def untrack(
-    message: types.Message, con: sqlite3.Connection, state: FSMContext
-):
-    await message.answer("Fine! Send me the part number of your good!")
+@router.callback_query(StateFilter(None), F.data == "main_menu_untrack")
+async def untrack(callback: types.CallbackQuery, state: FSMContext):
+    await callback.message.answer(
+        "Fine! Send me the part number of your good!"
+    )
     await state.set_state(UntrackState.entering_part_number)
+    await callback.answer()
 
 
 @router.message(UntrackState.entering_part_number)
@@ -79,5 +85,6 @@ async def remove_good(
         cur.execute("DELETE FROM goods WHERE part_number = ?", (message.text,))
     cur.close()
     con.commit()
-    await message.answer("Success!", reply_markup=start_kb())
+    await message.answer("Success!")
+    await main_menu(message, state, con)
     await state.clear()
