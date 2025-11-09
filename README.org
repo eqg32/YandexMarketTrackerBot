@@ -4,4 +4,4 @@ This is a Yandex Market tracker bot. It is used to track goods the user wants.
 
 * Configuration
 
-Configuration example is given in the repo after the name ~example_config.toml~. All of the configuration should be done in ~config.toml~ file.
+Configuration example is given in the repo under the name ~example_config.toml~. All of the configuration should be done in ~config.toml~ file.
