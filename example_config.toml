@@ -1,3 +1,6 @@
+[general]
+token = "0000000000:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+
 [xpaths]
 # xpaths of elements on a webpage
 title_path = ''

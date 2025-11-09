@@ -3,12 +3,22 @@ from src.handlers import general
 from src.handlers import track
 from src.handlers import view_cart
 from src.middlewares.db_middleware import DBMiddleware
+import tomllib
 import asyncio
 import os
 
 
 async def main():
-    bot = Bot(os.getenv("TOKEN"))
+    token = os.getenv("TOKEN")
+    if token is None:
+        with open("config.toml", "rb") as file:
+            config = tomllib.load(file)
+            try:
+                token = config["general"]["token"]
+            except KeyError:
+                print("No token specified!")
+                return
+    bot = Bot(token)
     dp = Dispatcher()
     db_middleware = DBMiddleware()
 
